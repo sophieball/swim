@@ -8,14 +8,18 @@ hasharr = [0]
 srcs = []
 dests = []
 
-src_dots = []
+src_sqs = []
+src_sqs_old = []
 src_texts = []
+src_texts_old = src_texts = []
 src_freq = []
 src_cur = []
 src_last = []
 
-dest_dots = []
+dest_sqs = []
+dest_sqs_old = []
 dest_texts = []
+dest_texts_old = []
 dest_freq = []
 dest_cur = []
 dest_last = []
@@ -23,14 +27,16 @@ dest_last = []
 circles = []
 circles_old = []
 freqs = []
-pos = [(80, 250), (160, 250), (240, 250), (320, 250), (400, 250), (480, 250), (560, 250), (640, 250), (700, 250),
-       (80, 500), (160, 500), (240, 500), (320, 500), (400, 500), (480, 500), (560, 500), (640, 500), (700, 500)]
-pos_taken = [0] * 18
+pos = [(100, 250), (200, 250), (300, 250), (400, 250), (500, 250), (600, 250), (700, 250), (800, 250), (900, 250), (1000, 250), (1100, 250), (1200, 250), (1300, 250),
+       (100, 500), (200, 500), (300, 500), (400, 500), (500, 500), (600, 500), (700, 500), (800, 500), (900, 500), (1000, 500), (1100, 500), (1200, 500), (1300, 500)]
+pos_taken = [0] * 26
 
 gap = 10
 
-lines = []
-line_last = []
+src_lines = []
+src_lines_old = []
+dest_lines = []
+dest_lines_old = []
 
 hfile = open("arrout", "r")
 hline = hfile.readline()
@@ -55,8 +61,7 @@ while(len(vline) != 0):
     src_cur = []
     dest_last = copy.copy(dest_cur)
     dest_cur = []
-    line_last = copy.copy(lines)
-    lines = []
+
 
     while("===" not in vline and len(vline) != 0):
         i = int(vline.split(' ')[0])
@@ -67,30 +72,22 @@ while(len(vline) != 0):
         
         m = re.search('\((.|.+?)\)', vline)
         print m.group(1)
-        if(int(m.group(1)) > 5):
+        if(int(m.group(1)) > 2):
         
             if src in srcs:
                 src_freq[srcs.index(src)] = int(m.group(1))
-                src_dots[srcs.index(src)] = Circle(Point(250, ((srcs.index(src))+1)*gap), 0.8*src_freq[(srcs.index(src))])
-  
             else:
                 srcs.append(src)
                 src_freq.append(int(m.group(1)))
-                src_dots.append(Circle(Point(250, ((srcs.index(src))+1)*gap), 0.8*src_freq[(srcs.index(src))]))
-                src_texts.append(Text(Point(150, (srcs.index(src)+1)*gap), src))
             src_cur.append(srcs.index(src))
             
             if dest in dests:
                 dest_freq[dests.index(dest)] = int(m.group(1))
-                dest_dots[dests.index(dest)] = Circle(Point(450, ((dests.index(dest))+1)*gap), 0.8*dest_freq[(dests.index(dest))])
             else:
                 dests.append(dest)
                 dest_freq.append(int(m.group(1)))
-                dest_dots.append(Circle(Point(450, ((dests.index(dest))+1)*gap), 0.8*dest_freq[(dests.index(dest))]))
-                dest_texts.append(Text(Point(550, (dests.index(dest)+1)*gap), dest))
             dest_cur.append(dests.index(dest))
                 
-            lines.append(Line(src_dots[srcs.index(src)].getCenter(), dest_dots[dests.index(dest)].getCenter()))
 
         vline = vfile.readline()
 
@@ -100,19 +97,54 @@ while(len(vline) != 0):
         if c not in circles:
             c.undraw()
             center = c.getCenter()
-            print center.getX()
-            print center.getY()
             pos_taken[pos.index((center.getX(), center.getY()))] = 0
-            
+
+    for s in src_sqs_old:
+        if s not in src_sqs:
+            s.undraw()
+    for d in dest_sqs_old:
+        if d not in dest_sqs:
+            d.undraw()
+    for l in src_lines_old:
+        if l not in src_lines:
+            l.undraw()
+    for l in dest_lines_old:
+        if l not in dest_lines:
+            l.undraw()
+              
         
     for c in circles:
         c.setFill("blue3")
         c.setOutline("blue3")
+    for s in src_sqs:
+        s.setFill("purple3")
+        s.setOutline("purple3")
+    for d in dest_sqs:
+        d.setFill("purple3")
+        d.setOutline("purple3")
+    for l in src_lines:
+        l.setFill("grey")
+        l.setOutline("grey")
+    for l in dest_lines:
+        l.setFill("grey")
+        l.setOutline("grey")
 
     circles_old = copy.copy(circles)
     circles = []
+    src_sqs_old = copy.copy(src_sqs)
+    src_sqs = []
+    dest_sqs_old = copy.copy(dest_sqs)
+    dest_sqs = []
+    src_lines_old = src_lines
+    src_lines = []
+    dest_lines_old = dest_lines
+    dest_lines = []
     freqs_old = copy.copy(freqs)
     freqs = []
+    dest_texts_old = copy.copy(dest_texts)
+    dest_texts = []
+    src_texts_old = copy.copy(src_texts)
+    src_texts = []
 
     for i in range(0, len(src_cur)):
         if i not in circles_old:
@@ -124,94 +156,38 @@ while(len(vline) != 0):
             circles[i].setFill("blue")
             circles[i].setOutline("blue")
             circles[i].draw(win)
+    
+            src_sqs.append(Rectangle(Point(center[0]+40, center[1] -75), Point(center[0]-40, center[1] - 100)))
+            src_sqs[i].setFill("purple")
+            src_sqs[i].setOutline("purple")
+            src_sqs[i].draw(win)
+
+            dest_sqs.append(Rectangle(Point(center[0]+40, center[1] +75 ), Point(center[0]-40, center[1] +100)))
+            dest_sqs[i].setFill("purple")
+            dest_sqs[i].setOutline("purple")
+            dest_sqs[i].draw(win)
+
+            src_lines.append(Line(Point(src_sqs[i].getCenter().getX(), src_sqs[i].getCenter().getY()+15), Point(circles[i].getCenter().getX(), circles[i].getCenter().getY() - circles[i].getRadius())))
+            src_lines[i].setArrow('last')
+            src_lines[i].draw(win)
+
+            dest_lines.append(Line(Point(dest_sqs[i].getCenter().getX(), dest_sqs[i].getCenter().getY()-15), Point(circles[i].getCenter().getX(), circles[i].getCenter().getY() + circles[i].getRadius())))
+            dest_lines[i].setArrow('first')
+            dest_lines[i].draw(win)
+
+            src_texts.append(Text(src_sqs[i].getCenter(), str(srcs[src_cur[i]])))
+            src_texts[i].setSize(8)
+            src_texts[i].setFill("white")
+            src_texts[i].draw(win)
+
+            dest_texts.append(Text(dest_sqs[i].getCenter(), str(dests[dest_cur[i]])))
+            dest_texts[i].setSize(8)
+            dest_texts[i].setFill("white")
+            dest_texts[i].draw(win)
 
             freqs.append(Text(circles[i].getCenter(), str(src_freq[src_cur[i]] / 1000.0 * 100.0) + "%"))
             freqs[i].setFill("white")
             freqs[i].draw(win)
-
-        
-                       
-    
-    #draw
-##    
-##    i = 0
-##    while i < len(src_dots):
-##        c = src_dots[i]
-##        if(src_freq[i] > 0):
-##            c.setFill("red")
-##            c.setOutline("red")
-##        else:
-##            c.setFill("white")
-##            c.setOutline(color_rgb(245,245,245))
-##        t = src_texts[i]
-##        if(i in src_cur and (i not in src_last)):
-##            t.setFill("black")
-##            t.setStyle('bold')
-##            try:
-##                t.draw(win)
-##                c.draw(win)
-##                #break
-##            except:
-##                pass
-##        elif(i not in src_cur and (i in src_last)):
-##            
-##            t.setStyle('normal')
-##            t.setFill("grey")
-##            try:
-##                t.draw(win)
-##                c.draw(win)
-##                #break
-##            except:
-##                pass
-##        elif(i not in src_cur and (i not in src_last)):
-##            t.undraw()
-##            c.undraw()
-##
-##        i = i + 1
-##
-##    i = 0
-##    while i < len(dest_dots):
-##        c = dest_dots[i]
-##        if(dest_freq[i] > 0):
-##            c.setFill("red")
-##            c.setOutline("red")
-##        else:
-##            c.setFill("white")
-##            c.setOutline(color_rgb(245,245,245))
-##        t = dest_texts[i]
-##        if(i in dest_cur and i not in dest_last):
-##            t.setFill("black")
-##            t.setStyle('bold')
-##            try:
-##                t.draw(win)
-##                c.draw(win)
-##                #break
-##            except:
-##                pass
-##        elif(i not in dest_cur and i in dest_last):    
-##            t.setStyle('normal')
-##            t.setFill("grey")
-##            try:
-##                t.draw(win)
-##                c.draw(win)
-##                #break
-##            except:
-##                pass
-##        elif(i not in dest_cur and i not in dest_last):
-##            t.undraw()
-##            c.undraw()
-##        i = i + 1
-##
-##    for l in lines:
-##        if l in line_last:
-##            l.setFill("grey")
-##            l.setArrow('last')
-##            line_last.remove(l)
-##        else:
-##            l.draw(win)
-##            l.setArrow('last')
-##    for ll in line_last:
-##        ll.undraw()
 
     update()
     time.sleep(1)
