@@ -98,6 +98,7 @@ for (i in 1:(dim(ys)[2]/2)) {
 #==========
 
 #calculate curves
+col = c("#234234", "#AEF324", "#EF1342", "#532D12", "#234124", "235342")
 for (i in 1:(dim(dat)[2]/2 - 1)) {
   start = (i - 1) * col_dist + col_width + 0.01
   end = i * col_dist - 0.01
@@ -121,6 +122,6 @@ for (i in 1:(dim(dat)[2]/2 - 1)) {
       right_y_bot[sorted_id] = right_y_bot[sorted_id] + height
       curve_y[k, 3] = right_y_bot[sorted_id]
     }
-    xspline(x = curve_x, y = curve_y[k, ], open = FALSE, col = alpha("green", 0.5), border = "green")
+    xspline(x = curve_x, y = curve_y[k, ], open = FALSE, col = alpha(col[k], 0.5), border = col[k])
   }
 }
