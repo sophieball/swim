@@ -103,13 +103,13 @@ for (i in 1:(dim(dat)[2]/2 - 1)) {
   end = i * col_dist - 0.01
   curve_x = c(start, end, end, start)
   curve_y = matrix(NA, nrow = dim(dat)[1], ncol = 4)
-  left_y_bot = ys[, i]
-  right_y_bot = ys[, i + 2]
   dat_col = i * 2 - 1
+  left_y_bot = ys[, dat_col]
+  right_y_bot = ys[, dat_col + 2]
   for (k in 1:dim(dat)[1]) {
     sorted_id = match(dat[[k, dat_col]], com_names[, i])
     curve_y[k, 1] = left_y_bot[sorted_id] #left_bot
-    height = dat[k, dat_col + 1] / com_freqs[sorted_id, i] * (ys[sorted_id, i + 1] - ys[sorted_id, i])
+    height = dat[k, dat_col + 1] / com_freqs[sorted_id, i] * (ys[sorted_id, dat_col + 1] - ys[sorted_id, dat_col])
     left_y_bot[sorted_id] = left_y_bot[sorted_id] + height
     curve_y[k, 4] = left_y_bot[sorted_id]
     
@@ -117,7 +117,7 @@ for (i in 1:(dim(dat)[2]/2 - 1)) {
     if (i < dim(com_names)[2]) {
       sorted_id = match(dat[[k, dat_col + 2]], com_names[, i + 1])
       curve_y[k, 2] = right_y_bot[sorted_id]
-      height = dat[k, dat_col + 3] / com_freqs[sorted_id, i + 1] * (ys[sorted_id, i + 3] - ys[sorted_id, i + 2])
+      height = dat[k, dat_col + 3] / com_freqs[sorted_id, i + 1] * (ys[sorted_id, dat_col + 3] - ys[sorted_id, dat_col + 2])
       right_y_bot[sorted_id] = right_y_bot[sorted_id] + height
       curve_y[k, 3] = right_y_bot[sorted_id]
     }
