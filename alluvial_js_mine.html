@@ -48,72 +48,45 @@ d3.csv("traffic_r.csv", function(data) {
     var allLinks = []; // links between cols
     var counter = 0;
 
-    //generate nodes for one col
-    function addNodes(names, values, links) {
-        var ncount = names.length; // number of nodes in this col
-        var nodes = d3.range(0, ncount).map(function(n) {
-            return {
-                id: counter++,
-                nodeName: names[n],
-                nodeValue: values[names[n]],
-                incoming: [],
-                link: links[names[n]], //links coming out
-                linkCount: Object.keys(links[names[n]]).length
-            }
-        });
-        times.push(nodes);
-        return nodes;
-    }
-
-    function addNext(names, values, links, t) {
-        if (t == 0) {
-            addNodes(names, values, links);
-            return;
-        }
-        var current = times[times.length - 1]; // an array of last col's nodes
-        var nextt = addNodes(names, values, links, counter);
-
-        current.forEach(function(n) {
-            var linkCount = n.linkCount;
-            var target, link, x;
-            for (x = 0; x < linkCount; x++) {
-                link = {
-                    source: n.id,
-                    target: Object.keys(n.link)[x], // how to get the id????
-                    value: n.link[x]
-                };
-                allLinks.push(link);
-            }
-        })
-    }
-
     function parse_data() {
         var maxt = num_cols.length, t = 0;
 
-        for (t = 0; t < maxt; t++) {
-            var values = {}, links = {}, linkCounts = {}, names = [],  i; 
+        for (t = 0; t < maxt; t++) {//col
+            var values = {}, links = {}, nextLinks = {}, names = [],  i; 
+
             //find unique names in this col
-            for(i = 0; i < data.length; i++) {
+            for(i = 0; i < data.length; i++) {//row
                 if(typeof(values[data[i][dest_cols[t]]]) == "undefined") {
                     values[data[i][dest_cols[t]]] = data[i][num_cols[t]];
                     links[data[i][dest_cols[t]]] = {};
                     links[data[i][dest_cols[t]]][data[i][dest_cols[t + 1]]] = data[i][num_cols[t]];
+                    if(t < maxt - 1) {
+                        nextLinks[data[i][dest_cols[t]]] = {};
+                        nextLinks[data[i][dest_cols[t]]][data[i][dest_cols[t + 1]]] = data[i][num_cols[t + 1]];
+                    }
                 } 
                 else {
                     values[data[i][dest_cols[t]]] += data[i][num_cols[t]];
                     if (typeof(links[data[i][dest_cols[t]]][data[i][dest_cols[t + 1]]]) == "undefined") {
                         links[data[i][dest_cols[t]]][data[i][dest_cols[t + 1]]] = data[i][num_cols[t]];
+                    
+                        if(t < maxt - 1) {
+                            nextLinks[data[i][dest_cols[t]]][data[i][dest_cols[t + 1]]] = data[i][num_cols[t + 1]];
+                        }
                     }
                     else {
                         links[data[i][dest_cols[t]]][data[i][dest_cols[t + 1]]] += data[i][num_cols[t]];
+
+                        if(t < maxt - 1) {
+                            nextLinks[data[i][dest_cols[t]]][data[i][dest_cols[t + 1]]] += data[i][num_cols[t + 1]];
+                        }
                     }
                 }
             }
-
             //sort by values in descending order
             names = Object.keys(values).sort(function(a,b){return values[b]-values[a]}); 
-
-            addNext(names, values, links, t);
+            console.log(nextLinks);
+            addNext(names, values, links, nextLinks, t);
         }
         return {
                 times: times,
@@ -122,87 +95,64 @@ d3.csv("traffic_r.csv", function(data) {
         
     }
 
-//======
-    function gen_data(names, values) {
-            var maxt = num_cols.length, //col, # of time stamps
-                maxn = 12,
-                maxl = 4,
-                maxv = 10,
-                times = [],
-                allLinks = [],
-                counter = 0,
-                // generate nodes for one col
-                addNodes = function(t) {
-                    var ncount = 4;//node count
-                        nodes = d3.range(0, ncount).map(function(n) {
-                            return {
-                                id: counter++,
-                                nodeName: data[n][dest_cols[t]],//names[counter++],
-                                nodeValue: 0,
-                                incoming: []
-                            }
-                        });
-                    times.push(nodes);
-                    return nodes;
-                },
-                addNext = function(t) {
-                    var current = times[times.length-1],
-                        nextt = addNodes(t);//next col of nodes
-                    // make links
-                    current.forEach(function(n) {
-                        var linkCount = Math.min(~~(Math.random() * maxl + 1), nextt.length), //number of links coming out of nodes
-                            breaks = d3.range(linkCount-1)
-                                .map(function() { return Math.random() * n.nodeValue })//subitem portion
-                                .sort(d3.ascending),
-                            links = {},
-                            target, link, x;
-                        for (x=0; x<linkCount; x++) {
-                            do { 
-                                target = nextt[~~(Math.random() * nextt.length)];
-                            } while (target.id in links);
-                            // add link
-                            link = {
-                                source: n.id,
-                                target: target.id,
-                                value: (breaks[x] || n.nodeValue) - (breaks[x-1] || 0)
-                            };
-                            links[target.id] = link;
-                            allLinks.push(link);
-                            target.nodeValue += link.value;
-                        }
-                    });
-                    // prune next
-                    times[times.length-1] = nextt.filter(function(n) { return n.nodeValue });
-                }
-            // initial set
-            addNodes(0).forEach(function(n) {
-                n.nodeValue = values[n.id];//Math.random() * maxv + 1;
-            });
-            // now add rest
-            for (var t=0; t<maxt-1; t++) {
-                addNext(t+1);
-            }
-            
+    //generate nodes for one col
+    function addNodes(names, values, links, nextLinks, t) {
+        var ncount = names.length; // number of nodes in this col
+        var nodes = d3.range(0, ncount).map(function(n) {
             return {
-                times: times,
-                links: allLinks
-            };
+                id: counter++,
+                nodeName: names[n],
+                nodeValue: values[names[n]],
+                incoming: [],
+                link: links[names[n]], //links coming out
+                linkCount: Object.keys(links[names[n]]).length,
+                targetValue: nextLinks[names[n]]
+            }
+        });
+        times.push(nodes);
+        console.log(nextLinks);
+        return nodes;
+    }
+
+    function addNext(names, values, links, nextLinks, t) {
+        if (t == 0) {
+            addNodes(names, values, links, nextLinks, t);
+            return;
         }
+        var current = times[times.length - 1]; // an array of last col's nodes
+        var nextt = addNodes(names, values, links, nextLinks, t);
 
+        current.forEach(function(n) {
+            var linkCount = n.linkCount;
+            var link, x, i, targetid;
+            for (x = 0; x < linkCount; x++) {
+                //get target id:
+                //this might be very inefficient
+                for (i = 0; i < nextt.length; i++) {
+                    if (nextt[i].nodeName == Object.keys(n.link)[x]) {
+                        targetid = nextt[i].id;
+                    }
+                }
 
+                link = {
+                    source: n.id,
+                    target: targetid, 
+                    value: Object.values(n.link)[x],
+                    targetValue: Object.values(n.targetValue)[x]
+                };
+                allLinks.push(link);
+            }
+        })
+    }
 
-    names = ["a", "b", "c", "d", "a", "b", "c", "d", "a", "b", "c", "d", "a", "b", "c", "d"]
-    values = [3,2,4,2,5,3,6,4,7,3,4,2,5,4,7,4]
-    //var data = gen_data(names, values);
-    var data = parse_data();
-    console.log(data);
+    var dat = parse_data();
 
     /* Process Data */
         
     // make a node lookup map
     var nodeMap = (function() {
         var nm = {};
-        data.times.forEach(function(nodes) {
+        dat.times.forEach(function(nodes) {
             nodes.forEach(function(n) {
                 nm[n.id] = n;
                 // add links and assure node value
@@ -215,13 +165,13 @@ d3.csv("traffic_r.csv", function(data) {
     })();
 
     // attach links to nodes
-    data.links.forEach(function(link) {
+    dat.links.forEach(function(link) {
         nodeMap[link.source].links.push(link);
         nodeMap[link.target].incoming.push(link);
     });
         
     // sort by value and calculate offsets
-    data.times.forEach(function(nodes) {
+    dat.times.forEach(function(nodes) {
         var cumValue = 0;
         nodes.sort(function(a,b) {
             return d3.descending(a.nodeValue, b.nodeValue)
@@ -243,7 +193,7 @@ d3.csv("traffic_r.csv", function(data) {
                     lCumValue += l.value;
                 });
             }
-            // incoming
+            // incoming, should use target value
             if (n.incoming) {
                 lCumValue = 0;
                 n.incoming.sort(function(a,b) {
@@ -251,16 +201,16 @@ d3.csv("traffic_r.csv", function(data) {
                 });
                 n.incoming.forEach(function(l) {
                     l.inOffset = lCumValue;
-                    lCumValue += l.value;
+                    lCumValue += l.targetValue;
                 });
             }
         })
     });
-    data = data.times;
+    dat = dat.times;
 
     // calculate maxes
-    var maxn = d3.max(data, function(t) { return t.length }),
-        maxv = d3.max(data, function(t) { return d3.sum(t, function(n) { return n.nodeValue }) });
+    var maxn = d3.max(dat, function(t) { return t.length }),
+        maxv = d3.max(dat, function(t) { return d3.sum(t, function(n) { return n.nodeValue }) });
 
     /* Make Vis */
         
@@ -271,13 +221,13 @@ d3.csv("traffic_r.csv", function(data) {
         delay = 1500,
         padding = 15,
         x = d3.scale.ordinal()
-            .domain(d3.range(data.length))
-            .rangeBands([0, w + (w/(data.length-1))], gapratio),
+            .domain(d3.range(dat.length))
+            .rangeBands([0, w + (w/(dat.length-1))], gapratio),
         y = d3.scale.linear()
             .domain([0, maxv])
             .range([0, h - padding * maxn]),
-        line = d3.svg.line()
-            .interpolate('basis');
+        area = d3.svg.line()
+            .interpolate('monotone');
             
     // root
     var vis = d3.select("body")
@@ -289,7 +239,7 @@ d3.csv("traffic_r.csv", function(data) {
     var t = 0;
     function update(first) {
         // update data
-        var currentData = data.slice(0, ++t);
+        var currentData = dat.slice(0, ++t);
         
         // time slots
         var times = vis.selectAll('g.time')
@@ -313,7 +263,7 @@ d3.csv("traffic_r.csv", function(data) {
                 .attr('width', x.rangeBand())
                 .attr('height', function(n) { return y(n.nodeValue) })
               .append('svg:title')
-                .text(function(n) { return "node: ".concat(n.nodeName).concat(" value: ").concat(n.nodeValue) });
+                .text(function(n) { return "id: ".concat(n.nodeName).concat(" freq ").concat(n.nodeValue) });
         }, (first ? 0 : delay));
             
         var linkLine = function(start) {
@@ -321,27 +271,46 @@ d3.csv("traffic_r.csv", function(data) {
                 var source = nodeMap[l.source],
                     target = nodeMap[l.target],
                     gapWidth = x(0),
+                    nextGap = x(1),
                     bandWidth = x.rangeBand() + gapWidth,
                     startx = x.rangeBand() - bandWidth,
                     sourcey = y(source.offsetValue) + 
                         source.order * padding +
+                        y(l.outOffset),
+                    sourceyb = y(source.offsetValue) + 
+                        source.order * padding +
                         y(l.outOffset) +
-                        y(l.value)/2,
+                        y(l.value),
                     targety = y(target.offsetValue) + 
                         target.order * padding + 
+                        y(l.inOffset),
+                    targetyb = y(target.offsetValue) + 
+                        target.order * padding + 
                         y(l.inOffset) +
-                        y(l.value)/2,
+                        y(l.targetValue),
+                    //TODO: Draw an area
                     points = start ? 
                         [
-                            [ startx, sourcey ], [ startx, sourcey ], [ startx, sourcey ], [ startx, sourcey ] 
+                            [ startx, sourcey ], [ startx, sourcey ], [ startx, sourcey ], [ startx, sourcey ],
+                            [ startx, sourcey ], [ startx, sourcey ], [ startx, sourcey ], [ startx, sourcey ]
                         ] :
                         [
                             [ startx, sourcey ],
-                            [ startx + gapWidth/2, sourcey ],
-                            [ startx + gapWidth/2, targety ],
-                            [ 0, targety ]
+                            [ startx, sourceyb ],
+                            [ startx + gapWidth/3, sourceyb ],
+                            [ startx + 2*gapWidth/3, targetyb ],
+
+                            [ startx + gapWidth, targetyb ],
+
+                            [ startx + gapWidth, targety ],
+
+                            [ startx + 2*gapWidth/3, targety ],
+
+                            [ startx + gapWidth/3, sourcey ],
+                            [ startx, sourcey ],
                         ];
-                return line(points);
+                    console.log(l);
+                return area(points);
             }
         }
             
@@ -350,12 +319,14 @@ d3.csv("traffic_r.csv", function(data) {
             .data(function(n) { return n.incoming || [] })
           .enter().append('svg:path')
             .attr('class', 'link')
-            .style('stroke-width', function(l) { return y(l.value) })
+            //.style('stroke-width', function(l) { return y(l.value) })
+            .style("fill", "red")
             .attr('d', linkLine(true))
             .on('mouseover', function() {
                 d3.select(this).attr('class', 'link on')  
                 .append("svg:title")
-                    .text(function(t) { return t.value })
+                    .text(function(t) { return "src: ".concat(t.source).concat(" dest: ")
+                        .concat(t.target).concat(" freq: ").concat(t.value) })
             })
             .on('mouseout', function() {
                 d3.select(this).attr('class', 'link')
@@ -367,7 +338,7 @@ d3.csv("traffic_r.csv", function(data) {
     }
 
     function updateNext() {
-        if (t < data.length) {
+        if (t < dat.length) {
             update();
             window.setTimeout(updateNext, delay)
         }
