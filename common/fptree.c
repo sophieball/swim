@@ -175,7 +175,7 @@ int InsertTransAdr(Tree * tree, Trans trans, Node * returnFreqAdr)
 }
 
 #ifdef SWIM
-inline int CountNodes(Tree * tree, int min_allowed_start)
+int CountNodes(Tree * tree, int min_allowed_start)
 {
 	Node *node;
 	int i, num = 0;
@@ -194,7 +194,7 @@ inline int CountNodes(Tree * tree, int min_allowed_start)
 #endif
 
 #ifdef SWIM
-inline int PruneTree(Tree * tree, int min_allowed_end)
+int PruneTree(Tree * tree, int min_allowed_end)
 {
 	Node *parent, *node, *next;
 	int i, deleted = 0, barzantest = 0;

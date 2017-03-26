@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "fptree.h"
-#include "memmgr.h" 
-#include "timeval.h"
+#include "../common/fptree.h"
+#include "../common/memmgr.h" 
+#include "../common/timeval.h"
 
 #include <mcheck.h>
 
@@ -243,7 +243,7 @@ int main(int argc, char *argv[]){
 //Reading expired chunk
 		tree=localFPs[expired_index];
 //printf("The tree to expire\n");
-//showSubTree(&tree->root, 0,rev_order, 1);
+showSubTree(&tree->root, 0,rev_order, 1);
 		all_trans_len=local_all_trans_len[expired_index];
 		
 		fprintf(stderr,"Slice %d was re-accessed for expiration (all_trans_len=%d): >>>>>>>>>>\n",windowid - no_slides,all_trans_len);
